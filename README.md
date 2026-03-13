@@ -2,21 +2,23 @@
 
 Bot Telegram tự động quét email bị nhãn **rejected** trên Gmail và gửi email từ chối hàng loạt.
 
+**Phiên bản mới:** Sử dụng **App Password + IMAP/SMTP** thay vì OAuth2 để dễ dàng cài đặt hơn!
+
 ---
 
 ## 📋 Luồng hoạt động
 
 ```
 Telegram /scan
-    ↓
-Quét Gmail (label: rejected, chưa có: replied)
-    ↓
+ ↓
+Quét Gmail (folder: rejected, chưa có: replied)
+ ↓
 Báo danh sách → Hỏi xác nhận
-    ↓ (bấm ✅ Xác nhận)
+ ↓ (bấm ✅ Xác nhận)
 Gửi từng email (delay 1.5s/email)
-    ↓
-Cập nhật label: xoá "rejected", thêm "replied"
-    ↓
+ ↓
+Cập nhật folder: chuyển từ rejected sang replied
+ ↓
 Báo kết quả về Telegram
 ```
 
@@ -36,16 +38,15 @@ pip install -r requirements.txt
 2. Gõ `/newbot` → Đặt tên → Lấy **Token**
 3. Nhắn `@userinfobot` để lấy **User ID** của bạn
 
-### Bước 3: Cấu hình Google Cloud & Gmail API
+### Bước 3: Tạo Gmail App Password
 
-1. Vào [Google Cloud Console](https://console.cloud.google.com/)
-2. Tạo project mới (hoặc chọn project có sẵn)
-3. Vào **APIs & Services** → **Enable APIs**
-4. Tìm và bật **Gmail API**
-5. Vào **OAuth consent screen** → Chọn **External** → Điền thông tin
-6. Vào **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
-7. Chọn **Desktop app** → Tải file JSON → Đổi tên thành `credentials.json`
-8. Đặt `credentials.json` vào thư mục này
+1. Vào [Google Account Security](https://myaccount.google.com/security)
+2. Bật **2-Step Verification** (nếu chưa bật)
+3. Tìm **App passwords**
+4. Tạo mới:
+   - App: Mail
+   - Device: Custom name (ví dụ: "Gmail Reject Bot")
+5. Copy password (ví dụ: `abcd efgh ijkl mnop`)
 
 ### Bước 4: Cấu hình .env
 
@@ -56,18 +57,33 @@ cp .env.example .env
 Mở file `.env` và điền:
 
 ```env
+# Telegram Bot
 TELEGRAM_BOT_TOKEN=123456:ABCdef...      # Token từ BotFather
 ALLOWED_USER_IDS=987654321               # User ID của bạn
+
+# SMTP Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your-email@gmail.com
+SMTP_PASSWORD=abcd efgh ijkl mnop        # App Password
+
+# IMAP Configuration
+IMAP_HOST=imap.gmail.com
+IMAP_PORT=993
+IMAP_USERNAME=your-email@gmail.com
+IMAP_PASSWORD=abcd efgh ijkl mnop        # App Password
+
+# Sender Info
 SENDER_NAME=Phòng Nhân Sự
 SENDER_COMPANY=Công ty ABC
 ```
 
-### Bước 5: Tạo label Gmail
+### Bước 5: Tạo folder Gmail
 
 Trong Gmail:
-- Tạo label tên **`rejected`** (bot sẽ quét label này)
-- Gắn label này vào các email cần reply từ chối
-- Bot sẽ tự tạo label **`replied`** sau khi gửi
+- Tạo folder tên **`rejected`** (bot sẽ quét folder này)
+- Di chuyển email cần reply từ chối vào folder này
+- Bot sẽ tự tạo folder **`replied`** sau khi gửi
 
 ### Bước 6: Chỉnh template email từ chối
 
@@ -75,7 +91,7 @@ Mở file `config.py`, chỉnh phần:
 
 ```python
 EMAIL_BODY_PLAIN = """..."""
-EMAIL_BODY_HTML  = """..."""
+EMAIL_BODY_HTML = """..."""
 ```
 
 Các biến có thể dùng trong template:
@@ -93,8 +109,14 @@ Các biến có thể dùng trong template:
 python bot.py
 ```
 
-Lần đầu chạy, trình duyệt sẽ mở để xác thực Google → Đăng nhập Gmail → Cho phép quyền.
-Token sẽ được lưu vào `token.pickle` để dùng lại.
+Hoặc dùng virtual environment:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python bot.py
+```
 
 ---
 
@@ -115,26 +137,27 @@ Token sẽ được lưu vào `token.pickle` để dùng lại.
 |---------|---------|---------|
 | `MAX_EMAILS_PER_SCAN` | 200 | Số email tối đa mỗi lần quét |
 | `SEND_DELAY_SECONDS` | 1.5 | Delay giữa 2 email (giây) |
-| `REJECTED_LABEL` | `rejected` | Tên label cần quét |
-| `REPLIED_LABEL` | `replied` | Tên label sau khi gửi |
+| `REJECTED_LABEL` | `rejected` | Tên folder cần quét |
+| `REPLIED_LABEL` | `replied` | Tên folder sau khi gửi |
 
 ---
 
 ## 🛡️ Bảo mật
 
-- **Không commit** file `.env` và `credentials.json` lên git
+- **Không commit** file `.env` lên git
 - Thêm vào `.gitignore`:
   ```
   .env
-  credentials.json
-  token.pickle
   *.log
+  __pycache__/
+  .venv/
+  venv/
   ```
 - Chỉ những User ID trong `ALLOWED_USER_IDS` mới dùng được bot
 
 ---
 
-## 📊 Giới hạn Gmail API
+## 📊 Giới hạn Gmail
 
 | Loại tài khoản | Giới hạn gửi/ngày |
 |---------------|------------------|
@@ -147,11 +170,55 @@ Bot đã có delay 1.5s/email để tránh bị rate limit.
 
 ## 🐛 Lỗi thường gặp
 
-**`credentials.json not found`**
-→ Chưa đặt file credentials.json vào thư mục
+**`Authentication failed`**
+→ Kiểm tra App Password, đảm bảo 2-Step Verification đã bật
 
-**`Label 'rejected' không tìm thấy`**
-→ Chưa tạo label trong Gmail hoặc tên label sai
+**`Folder 'rejected' không tìm thấy`**
+→ Chưa tạo folder trong Gmail hoặc tên folder sai
 
 **`Unauthorized`** trong Telegram
 → User ID của bạn chưa có trong `ALLOWED_USER_IDS`
+
+---
+
+## 🚀 Chạy bot với systemd (Linux)
+
+Tạo file `/etc/systemd/system/gmail-reject-bot.service`:
+
+```ini
+[Unit]
+Description=Gmail Reject Auto-Reply Bot
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/gmail-reject-bot
+Environment=PATH=/home/ubuntu/gmail-reject-bot/venv/bin
+ExecStart=/home/ubuntu/gmail-reject-bot/venv/bin/python3 /home/ubuntu/gmail-reject-bot/bot.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Kích hoạt và chạy:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable gmail-reject-bot.service
+sudo systemctl start gmail-reject-bot.service
+```
+
+Kiểm tra trạng thái:
+
+```bash
+sudo systemctl status gmail-reject-bot.service
+```
+
+Xem logs:
+
+```bash
+sudo journalctl -u gmail-reject-bot.service -f
+```
