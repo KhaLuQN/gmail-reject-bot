@@ -87,7 +87,7 @@ Add:     {address}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin:0; padding:0; font-family: 'Courier New', Courier, monospace; background-color:#ffffff;">
+<body style="margin:0; padding:0; font-family: Arial, sans-serif; background-color:#ffffff;">
   <div style="max-width:640px; margin:0 auto; padding:32px 24px; color:#222222;">
 
     <!-- Nội dung chính -->
