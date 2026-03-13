@@ -174,6 +174,12 @@ class EmailService:
                     return name.strip()
                 except Exception:
                     return name_part
+
+        # Nếu không có tên, lấy username từ email (phần trước @)
+        email = self._extract_email(from_header)
+        if email and "@" in email:
+            return email.split("@")[0]
+
         return ""
 
     def send_rejection_reply(self, email: Dict):

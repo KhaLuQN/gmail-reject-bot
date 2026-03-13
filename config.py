@@ -61,7 +61,7 @@ class Config:
     # Nội dung Plain Text
     EMAIL_BODY_PLAIN: str = """Dear {name},
 
-Thank you for your interest in the {subject} position at {company} and for taking the time to submit your application.
+Thank you for your interest in the position at {company} and for taking the time to submit your application.
 
 After reviewing your CV, we regret to inform you that we will not be moving forward with your application at this time, as we have decided to proceed with other candidates whose qualifications more closely match our current requirements.
 
@@ -78,7 +78,7 @@ Best regards,
 <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <p>Dear <strong>{name}</strong>,</p>
 
-  <p>Thank you for your interest in the <strong>{subject}</strong> position at <strong>{company}</strong> and for taking the time to submit your application.</p>
+  <p>Thank you for your interest in the position at <strong>{company}</strong> and for taking the time to submit your application.</p>
 
   <p>After reviewing your CV, we regret to inform you that we will not be moving forward with your application at this time, as we have decided to proceed with other candidates whose qualifications more closely match our current requirements.</p>
 
