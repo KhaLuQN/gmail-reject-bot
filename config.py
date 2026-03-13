@@ -42,7 +42,7 @@ class Config:
     # ─────────────────────────────────────────────
     # ⚙️ CẤU HÌNH GỬI EMAIL
     # ─────────────────────────────────────────────
-    REPLY_SUBJECT_PREFIX: str = "Re: "
+    REPLY_SUBJECT_PREFIX: str = "Application Update – Leadsmax Group"
     MAX_EMAILS_PER_SCAN: int = 200     # Tối đa email quét mỗi lần
     SEND_DELAY_SECONDS: float = 1.5    # Delay giữa các email (tránh rate limit)
 
@@ -59,17 +59,15 @@ class Config:
     SENDER_COMPANY: str = os.getenv("SENDER_COMPANY", "Công ty ABC")
 
     # Nội dung Plain Text
-    EMAIL_BODY_PLAIN: str = """Kính gửi {name},
+    EMAIL_BODY_PLAIN: str = """Dear {name},
 
-Cảm ơn bạn đã quan tâm và ứng tuyển vào vị trí tại {company}.
+Thank you for your interest in the {subject} position at {company} and for taking the time to submit your application.
 
-Sau khi xem xét hồ sơ của bạn, chúng tôi rất tiếc phải thông báo rằng hồ sơ của bạn chưa phù hợp với yêu cầu của vị trí tuyển dụng hiện tại.
+After reviewing your CV, we regret to inform you that we will not be moving forward with your application at this time, as we have decided to proceed with other candidates whose qualifications more closely match our current requirements.
 
-Chúng tôi trân trọng sự quan tâm của bạn và mong rằng bạn sẽ tiếp tục theo dõi các cơ hội việc làm khác từ {company} trong tương lai.
+We truly appreciate your interest in joining our team and wish you every success in your future career.
 
-Chúc bạn thành công trong sự nghiệp!
-
-Trân trọng,
+Best regards,
 {sender_name}
 {company}
 """
@@ -78,19 +76,17 @@ Trân trọng,
     EMAIL_BODY_HTML: str = """<!DOCTYPE html>
 <html>
 <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <p>Kính gửi <strong>{name}</strong>,</p>
+  <p>Dear <strong>{name}</strong>,</p>
 
-  <p>Cảm ơn bạn đã quan tâm và ứng tuyển vào vị trí tại <strong>{company}</strong>.</p>
+  <p>Thank you for your interest in the <strong>{subject}</strong> position at <strong>{company}</strong> and for taking the time to submit your application.</p>
 
-  <p>Sau khi xem xét hồ sơ của bạn, chúng tôi rất tiếc phải thông báo rằng hồ sơ của bạn <strong>chưa phù hợp</strong> với yêu cầu của vị trí tuyển dụng hiện tại.</p>
+  <p>After reviewing your CV, we regret to inform you that we will not be moving forward with your application at this time, as we have decided to proceed with other candidates whose qualifications more closely match our current requirements.</p>
 
-  <p>Chúng tôi trân trọng sự quan tâm của bạn và mong rằng bạn sẽ tiếp tục theo dõi các cơ hội việc làm khác từ <strong>{company}</strong> trong tương lai.</p>
-
-  <p>Chúc bạn thành công trong sự nghiệp!</p>
+  <p>We truly appreciate your interest in joining our team and wish you every success in your future career.</p>
 
   <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
   <p style="color: #666; font-size: 14px;">
-    Trân trọng,<br>
+    Best regards,<br>
     <strong>{sender_name}</strong><br>
     {company}
   </p>
