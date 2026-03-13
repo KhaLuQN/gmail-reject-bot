@@ -147,12 +147,16 @@ class EmailService:
             if not from_email:
                 return None
 
+            # Decode subject header (hỗ trợ tiếng Việt, ký tự đặc biệt)
+            subject_raw = email_message.get("Subject", "(Không có tiêu đề)")
+            subject = self._decode_header(subject_raw)
+
             return {
                 "message_id": email_id.decode(),
                 "from_email": from_email,
                 "from_name": from_name,
                 "from_raw": from_raw,
-                "subject": email_message.get("Subject", "(Không có tiêu đề)"),
+                "subject": subject,
                 "original_message_id": email_message.get("Message-ID", ""),
                 "date": email_message.get("Date", ""),
             }
@@ -175,44 +179,16 @@ class EmailService:
         if "<" in from_header:
             name_part = from_header.split("<")[0].strip().strip('"')
             if name_part:
-                # Decode encoded header nếu có
-                try:
-                    decoded = decode_header(name_part)
-                    name = ""
-                    for part, encoding in decoded:
-                        if isinstance(part, bytes):
-                            # Thử decode với encoding cụ thể, fallback sang utf-8
-                            try:
-                                if encoding:
-                                    name += part.decode(encoding)
-                                else:
-                                    name += part.decode("utf-8")
-                            except (UnicodeDecodeError, LookupError):
-                                # Fallback: thử latin-1 hoặc bỏ qua phần này
-                                try:
-                                    name += part.decode("latin-1")
-                                except:
-                                    # Nếu vẫn fail, bỏ qua phần này
-                                    continue
-                        else:
-                            name += str(part)
+                # Sử dụng hàm _decode_header để decode
+                name = self._decode_header(name_part)
 
-                    # Clean up: loại bỏ các ký tự lạ, null bytes
-                    name = name.replace("\x00", "").replace("\ufffd", "").strip()
-
-                    # Nếu name rỗng sau khi decode, trả về username
-                    if not name:
-                        email = self._extract_email(from_header)
-                        if email and "@" in email:
-                            return email.split("@")[0]
-
-                    return name
-                except Exception as e:
-                    logger.warning(f"⚠️ Could not decode name from header: {e}")
-                    # Fallback: trả về username từ email
+                # Nếu name rỗng sau khi decode, trả về username
+                if not name:
                     email = self._extract_email(from_header)
                     if email and "@" in email:
                         return email.split("@")[0]
+
+                return name
 
         # Nếu không có tên, lấy username từ email (phần trước @)
         email = self._extract_email(from_header)
@@ -220,6 +196,55 @@ class EmailService:
             return email.split("@")[0]
 
         return ""
+
+    def _decode_header(self, header_value: str) -> str:
+        """
+        Decode header (Subject, From, etc.) hỗ trợ tiếng Việt và ký tự đặc biệt
+        Xử lý MIME encoded words: =?UTF-8?B?...?= hoặc =?ISO-8859-1?Q?...?=
+        """
+        if not header_value:
+            return "(Không có tiêu đề)"
+
+        try:
+            # Sử dụng decode_header của email library
+            decoded_parts = decode_header(header_value)
+            result = ""
+
+            for part, encoding in decoded_parts:
+                if isinstance(part, bytes):
+                    # Thử decode với encoding cụ thể
+                    try:
+                        if encoding:
+                            result += part.decode(encoding)
+                        else:
+                            # Fallback: thử utf-8, sau đó latin-1
+                            try:
+                                result += part.decode("utf-8")
+                            except UnicodeDecodeError:
+                                result += part.decode("latin-1", errors="ignore")
+                    except (UnicodeDecodeError, LookupError) as e:
+                        # Fallback: thử latin-1
+                        try:
+                            result += part.decode("latin-1", errors="ignore")
+                        except:
+                            # Nếu vẫn fail, bỏ qua phần này
+                            logger.warning(f"⚠️ Could not decode header part: {e}")
+                            continue
+                else:
+                    result += str(part)
+
+            # Clean up: loại bỏ null bytes và replacement characters
+            result = result.replace("\x00", "").replace("\ufffd", "").strip()
+
+            # Nếu kết quả rỗng, trả về giá trị gốc
+            if not result:
+                return header_value
+
+            return result
+
+        except Exception as e:
+            logger.warning(f"⚠️ Error decoding header '{header_value}': {e}")
+            return header_value
 
     def send_rejection_reply(self, email: Dict):
         """
