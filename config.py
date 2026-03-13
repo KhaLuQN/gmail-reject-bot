@@ -104,8 +104,15 @@ Best regards,
         Build nội dung email từ chối với các biến được thay thế
         Returns: {"plain": str, "html": str}
         """
-        # Dùng tên nếu có, không thì dùng email
-        display_name = recipient_name if recipient_name else recipient_email
+        # Dùng tên nếu có, không thì dùng username từ email (phần trước @)
+        if recipient_name and recipient_name.strip():
+            display_name = recipient_name
+        else:
+            # Lấy username từ email (phần trước @)
+            if recipient_email and "@" in recipient_email:
+                display_name = recipient_email.split("@")[0]
+            else:
+                display_name = recipient_email
 
         vars_map = {
             "name": display_name,
@@ -115,7 +122,14 @@ Best regards,
             "sender_name": cls.SENDER_NAME,
         }
 
-        return {
-            "plain": cls.EMAIL_BODY_PLAIN.format(**vars_map),
-            "html": cls.EMAIL_BODY_HTML.format(**vars_map),
-        }
+        try:
+            return {
+                "plain": cls.EMAIL_BODY_PLAIN.format(**vars_map),
+                "html": cls.EMAIL_BODY_HTML.format(**vars_map),
+            }
+        except KeyError as e:
+            logger.error(f"❌ Missing variable in template: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"❌ Error formatting email: {e}")
+            raise
