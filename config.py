@@ -22,8 +22,18 @@ class Config:
         int(x) for x in os.getenv("ALLOWED_USER_IDS", "").split(",") if x.strip()
     ]
 
-    CREDENTIALS_FILE: str = os.getenv("CREDENTIALS_FILE", "credentials.json")
-    TOKEN_FILE: str = "token.pickle"
+    # ─────────────────────────────────────────────
+    # 🔐 CẤU HÌNH SMTP/IMAP (Gmail App Password)
+    # ─────────────────────────────────────────────
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+
+    IMAP_HOST: str = os.getenv("IMAP_HOST", "imap.gmail.com")
+    IMAP_PORT: int = int(os.getenv("IMAP_PORT", "993"))
+    IMAP_USERNAME: str = os.getenv("IMAP_USERNAME", "")
+    IMAP_PASSWORD: str = os.getenv("IMAP_PASSWORD", "")
 
     # ─────────────────────────────────────────────
     # 🏷️ CẤU HÌNH LABEL GMAIL
