@@ -1,6 +1,6 @@
 """
 Gmail Reject Auto-Reply Bot
-Telegram Bot + Gmail API integration
+Telegram Bot + IMAP/SMTP integration
 """
 
 import logging
@@ -9,7 +9,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler, ContextTypes
 )
-from gmail_service import GmailService
+from imap_smtp_service import EmailService
 from config import Config
 
 logging.basicConfig(
@@ -66,8 +66,8 @@ async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = await update.message.reply_text("🔍 Đang quét Gmail... vui lòng đợi")
 
     try:
-        gmail = GmailService()
-        emails = gmail.get_rejected_emails()
+        email_service = EmailService()
+        emails = email_service.get_rejected_emails()
 
         if not emails:
             await msg.edit_text(
@@ -80,7 +80,7 @@ async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Lưu job vào pending
         pending_jobs[user_id] = {
             "emails": emails,
-            "gmail": gmail
+            "email_service": email_service
         }
 
         # Hiển thị preview
@@ -136,7 +136,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         emails = job["emails"]
-        gmail = job["gmail"]
+        email_service = job["email_service"]
         total = len(emails)
 
         await query.edit_message_text(
@@ -157,7 +157,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         text=f"⏳ Đang xử lý: {i}/{total}..."
                     )
 
-                gmail.send_rejection_reply(email)
+                email_service.send_rejection_reply(email)
                 success_list.append(email["from_email"])
                 logger.info(f"✅ Sent to {email['from_email']}")
 
