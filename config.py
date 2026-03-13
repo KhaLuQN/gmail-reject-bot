@@ -133,7 +133,7 @@ Add:     {address}
               <!-- Logo -->
               <td valign="middle" style="padding-right:20px;">
                 <img
-                  src="data:image/png;base64,{logo_b64}"
+                  src="data:image/jpeg;base64,{logo_b64}"
                   alt="{company}"
                   width="120"
                   style="display:block; border:0;"
