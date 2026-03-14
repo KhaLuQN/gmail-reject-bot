@@ -5,6 +5,7 @@ Telegram Bot + IMAP/SMTP integration
 
 import logging
 import asyncio
+import gc  # Garbage collection để giảm memory
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler, ContextTypes
@@ -14,7 +15,7 @@ from config import Config
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
+    level=logging.WARNING,  # Giảm log level để tiết kiệm memory
     handlers=[
         logging.FileHandler("bot.log"),
         logging.StreamHandler()
@@ -111,6 +112,9 @@ async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await msg.edit_text(text, parse_mode="Markdown", reply_markup=reply_markup)
 
+        # Giải phóng memory sau khi scan xong
+        gc.collect()
+
     except Exception as e:
         logger.error(f"Scan error: {e}")
         await msg.edit_text(f"❌ Lỗi khi quét Gmail:\n`{str(e)}`", parse_mode="Markdown")
@@ -174,6 +178,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Xoá pending job
         pending_jobs.pop(user_id, None)
 
+        # Giải phóng memory
+        gc.collect()
+
         # Tạo báo cáo kết quả
         report = _build_report(total, success_list, failed_list)
         await context.bot.send_message(
@@ -233,7 +240,8 @@ def main():
     app.add_handler(CallbackQueryHandler(button_handler))
 
     logger.info("🤖 Bot đang chạy...")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    # Chỉ nhận các update cần thiết để giảm memory
+    app.run_polling(allowed_updates=["message", "callback_query"])
 
 
 if __name__ == "__main__":
